@@ -1,0 +1,25 @@
+name: hijaiyah_web
+description: A Flutter Web App for Learning Hijaiyah.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  audioplayers: ^5.2.0
+  google_fonts: ^5.1.0
+  speech_to_text: ^6.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/audio/
