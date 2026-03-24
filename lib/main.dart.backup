@@ -18,7 +18,7 @@ class HijaiyahData {
   final String latin;
   final List<String> audioSequence;
   final String mandarinPinyin;
-  final String mandarinChar;
+  final String mandarinChar; // Chinese character for STT matching
 
   HijaiyahData({
     required this.arabic,
@@ -29,6 +29,7 @@ class HijaiyahData {
   });
 }
 
+// 4 Huruf Dasar + Mandarin Mapping (Pinyin + Chinese Char)
 final List<HijaiyahData> letters = [
   HijaiyahData(
     arabic: 'أَ',
@@ -72,7 +73,6 @@ class HijaiyahApp extends StatelessWidget {
       title: '📚 Belajar Hijaiyah',
       theme: ThemeData(
         primarySwatch: Colors.green,
-        // ✅ Font Latin tetap pakai Poppins via GoogleFonts
         fontFamily: GoogleFonts.poppins().fontFamily,
         useMaterial3: true,
       ),
@@ -137,26 +137,13 @@ class HomeScreen extends StatelessWidget {
             CircleAvatar(
               radius: 45,
               backgroundColor: Colors.white,
-              child: Text(
-                letter.arabic,
-                // ✅ DISPLAY FONT: TintaArabic untuk tampilan artistik
-                style: TextStyle(
-                  fontFamily: 'TintaArabic',
-                  fontSize: 50,
-                  color: Colors.green[800],
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: Text(letter.arabic,
+                  style: GoogleFonts.amiri(fontSize: 50, color: Colors.green[800])),
             ),
             const SizedBox(height: 10),
-            Text(
-              letter.latin,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
-            ),
+            Text(letter.latin,
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
           ],
         ),
       ),
@@ -301,16 +288,8 @@ class _LearningScreenState extends State<LearningScreen>
                         blurRadius: 20,
                         spreadRadius: 5)
                   ]),
-              child: Text(
-                widget.letter.arabic,
-                // ✅ DISPLAY FONT: TintaArabic untuk tampilan artistik
-                style: TextStyle(
-                  fontFamily: 'TintaArabic',
-                  fontSize: 180,
-                  color: Colors.green[800],
-                  fontWeight: FontWeight.bold,
-                ),
-              )),
+              child: Text(widget.letter.arabic,
+                  style: GoogleFonts.amiri(fontSize: 180, color: Colors.green[800]))),
           const SizedBox(height: 40),
           GestureDetector(
               onTap: _isPlaying ? null : _playAudio,
@@ -403,7 +382,7 @@ class _QuizPageState extends State<QuizPage> {
       secondIndex = random.nextInt(letters.length);
     } while (secondIndex == firstIndex);
     final first = letters[firstIndex], second = letters[secondIndex];
-    final combined = '${first.arabic}${second.arabic}';
+    final combined = '${first.arabic.replaceAll('َ', '')}${second.arabic}';
     setState(() {
       _currentCombination = [first.latin, second.latin];
       _combinedArabic = combined;
@@ -496,16 +475,9 @@ class _QuizPageState extends State<QuizPage> {
                                 spreadRadius: 5)
                           ]),
                       child: Column(children: [
-                        Text(
-                          _combinedArabic,
-                          // ✅ DISPLAY FONT: TintaArabic untuk tampilan artistik
-                          style: TextStyle(
-                            fontFamily: 'TintaArabic',
-                            fontSize: 120,
-                            color: Colors.purple[800],
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Text(_combinedArabic,
+                            style: GoogleFonts.amiri(
+                                fontSize: 120, color: Colors.purple[800], fontWeight: FontWeight.bold)),
                         const SizedBox(height: 20),
                         Text(_currentCombination.join('-'),
                             style: TextStyle(
@@ -580,7 +552,7 @@ class _QuizPageState extends State<QuizPage> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 🎤 STT PRACTICE PAGE
+// 🎤 STT PRACTICE PAGE - MANDARIN STT ENABLED ✅
 // ═══════════════════════════════════════════════════════════════
 class SttPracticePage extends StatefulWidget {
   const SttPracticePage({super.key});
@@ -615,6 +587,7 @@ class _SttPracticePageState extends State<SttPracticePage> {
 
   Future<void> _initSpeech() async {
     try {
+      // Initialize speech-to-text
       _isSpeechAvailable = await _speech.initialize(
         onStatus: (status) => print('🎤 Speech Status: $status'),
         onError: (error) => print('❌ Speech Error: $error'),
@@ -660,9 +633,10 @@ class _SttPracticePageState extends State<SttPracticePage> {
     });
 
     try {
+      // ✅ MANDARIN LOCALE - Works based on your diagnostic!
       _speech.listen(
         onResult: _onSpeechResult,
-        localeId: 'zh_CN',
+        localeId: 'zh_CN', // 👈 Mandarin locale (works on your Chrome!)
         listenFor: const Duration(seconds: 5),
         pauseFor: const Duration(seconds: 3),
         partialResults: true,
@@ -711,6 +685,8 @@ class _SttPracticePageState extends State<SttPracticePage> {
     if (_currentLetter == null) return;
 
     print('🎤 Raw recognized: "$recognizedWords"');
+
+    // Convert Chinese characters to Pinyin
     final pinyinFromSTT = _chineseToPinyin(recognizedWords);
     print('🔧 Converted to Pinyin: "$pinyinFromSTT"');
 
@@ -719,21 +695,29 @@ class _SttPracticePageState extends State<SttPracticePage> {
     print('📝 Expected Pinyin: "$expected"');
     print('📝 Expected Char: "$expectedChar"');
 
+    // Check multiple matching strategies
     bool isCorrect = false;
     String matchMethod = '';
 
+    // 1. Check if Chinese character matches directly
     if (recognizedWords.contains(expectedChar)) {
       isCorrect = true;
       matchMethod = 'Chinese char match';
     }
+
+    // 2. Check Pinyin match
     if (!isCorrect && pinyinFromSTT.contains(expected)) {
       isCorrect = true;
       matchMethod = 'Pinyin contains';
     }
+
+    // 3. Check reverse (expected contains recognized)
     if (!isCorrect && expected.contains(pinyinFromSTT) && pinyinFromSTT.isNotEmpty) {
       isCorrect = true;
       matchMethod = 'Reverse contains';
     }
+
+    // 4. Similarity score fallback
     if (!isCorrect && pinyinFromSTT.isNotEmpty) {
       final similarity = _similarityScore(pinyinFromSTT, expected);
       print('📊 Similarity score: $similarity%');
@@ -758,8 +742,11 @@ class _SttPracticePageState extends State<SttPracticePage> {
     });
   }
 
+  // ✅ Simple Chinese to Pinyin mapping for our 4 characters
   String _chineseToPinyin(String chinese) {
     String result = chinese.toLowerCase();
+    
+    // Map Chinese characters to Pinyin
     const Map<String, String> charToPinyin = {
       '阿': 'a',
       '八': 'ba',
@@ -768,10 +755,15 @@ class _SttPracticePageState extends State<SttPracticePage> {
       '萨': 'sa',
       '啊': 'a',
     };
+
+    // Replace each Chinese character with its Pinyin
     for (var entry in charToPinyin.entries) {
       result = result.replaceAll(entry.key, entry.value);
     }
+
+    // Remove any remaining non-Latin characters
     result = result.replaceAll(RegExp(r'[^\u0000-\u007F]'), '');
+    
     return result.trim();
   }
 
@@ -857,16 +849,9 @@ class _SttPracticePageState extends State<SttPracticePage> {
                                 spreadRadius: 5)
                           ]),
                       child: Column(children: [
-                        Text(
-                          _currentLetter!.arabic,
-                          // ✅ DISPLAY FONT: TintaArabic untuk tampilan artistik
-                          style: TextStyle(
-                            fontFamily: 'TintaArabic',
-                            fontSize: 120,
-                            color: Colors.blue[800],
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Text(_currentLetter!.arabic,
+                            style: GoogleFonts.amiri(
+                                fontSize: 120, color: Colors.blue[800], fontWeight: FontWeight.bold)),
                         const SizedBox(height: 20),
                         Text(_currentLetter!.latin,
                             style: TextStyle(
@@ -993,7 +978,7 @@ class _SttPracticePageState extends State<SttPracticePage> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ✍️ WRITING CANVAS - KHUSUS PAKAI NOTONASKHARABIC
+// ✍️ WRITING CANVAS
 // ═══════════════════════════════════════════════════════════════
 class WritingCanvas extends StatefulWidget {
   final String arabicChar;
@@ -1005,7 +990,6 @@ class WritingCanvas extends StatefulWidget {
 class _WritingCanvasState extends State<WritingCanvas> {
   List<List<Offset>> _paths = [];
   List<Offset> _currentPath = [];
-  
   void _clearCanvas() => setState(() {
         _paths.clear();
         _currentPath.clear();
@@ -1021,17 +1005,9 @@ class _WritingCanvasState extends State<WritingCanvas> {
           color: Colors.white),
       child: Stack(children: [
         Center(
-            child: Text(
-          widget.arabicChar,
-          // ✅ WRITING FONT: NotoNaskhArabic untuk tracing yang jelas
-          style: TextStyle(
-            fontFamily: 'NotoNaskhArabic',  // ← Font khusus menulis
-            fontSize: 220,
-            color: Colors.grey.shade300,     // Warna tipis agar tidak mengganggu coretan
-            fontWeight: FontWeight.normal,   // Regular lebih mudah ditelusuri
-            height: 1.0,
-          ),
-        )),
+            child: Text(widget.arabicChar,
+                style: GoogleFonts.amiri(
+                    fontSize: 220, color: Colors.grey.shade200, fontWeight: FontWeight.bold))),
         CustomPaint(
             painter: SignaturePainter(paths: [..._paths, _currentPath]), size: Size.infinite),
         Positioned(
@@ -1049,7 +1025,6 @@ class _WritingCanvasState extends State<WritingCanvas> {
 class SignaturePainter extends CustomPainter {
   final List<List<Offset>> paths;
   SignaturePainter({required this.paths});
-  
   @override
   void paint(Canvas canvas, Size size) {
     var paint = Paint()

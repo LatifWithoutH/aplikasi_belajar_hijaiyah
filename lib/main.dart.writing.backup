@@ -1,0 +1,473 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'dart:math' show sqrt, pow, cos, sin;
+
+void main() {
+  runApp(const WritingTestApp());
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎨 APP CONFIGURATION
+// ═══════════════════════════════════════════════════════════════
+class WritingTestApp extends StatelessWidget {
+  const WritingTestApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: '🧪 Test Writing Level 3',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        fontFamily: GoogleFonts.poppins().fontFamily,
+        useMaterial3: true,
+      ),
+      home: const WritingTestPage(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🧪 WRITING TEST PAGE
+// ═══════════════════════════════════════════════════════════════
+class WritingTestPage extends StatefulWidget {
+  const WritingTestPage({super.key});
+
+  @override
+  State<WritingTestPage> createState() => _WritingTestPageState();
+}
+
+class _WritingTestPageState extends State<WritingTestPage> {
+  String _selectedLetter = 'بَ';
+  double _threshold = 35.0; // Default threshold untuk anak TK
+  int _strokeCount = 0;
+
+  final List<String> _testLetters = ['أَ', 'بَ', 'تَ', 'ثَ'];
+
+  void _clearCanvas() {
+    setState(() {
+      _strokeCount = 0;
+    });
+    // Trigger clear via key
+    _canvasKey.currentState?.clear();
+  }
+
+  final GlobalKey<_SmartWritingCanvasState> _canvasKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('🧪 Test Writing Level 3'),
+        backgroundColor: Colors.blueAccent,
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _clearCanvas,
+            tooltip: 'Reset Canvas',
+          ),
+        ],
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blueAccent, Colors.cyanAccent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                // 📊 Info Panel
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        '🎯 Coba tulis huruf di bawah!',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Hijau = ✅ Tepat | Orange = ⚠️ Agak meleset | Merah = ❌ Meleset jauh',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('Threshold: '),
+                          Slider(
+                            value: _threshold,
+                            min: 10,
+                            max: 60,
+                            divisions: 10,
+                            label: _threshold.toString(),
+                            onChanged: (value) {
+                              setState(() {
+                                _threshold = value;
+                              });
+                              _canvasKey.currentState?.updateThreshold(value);
+                            },
+                          ),
+                          Text('${_threshold.toStringAsFixed(0)}px'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // 🔤 Pilih Huruf
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: _testLetters.map((letter) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: ChoiceChip(
+                        label: Text(letter, style: GoogleFonts.amiri(fontSize: 24)),
+                        selected: _selectedLetter == letter,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() => _selectedLetter = letter);
+                            _clearCanvas();
+                          }
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+
+                // ✍️ Canvas Writing
+                Expanded(
+                  child: SmartWritingCanvas(
+                    key: _canvasKey,
+                    arabicChar: _selectedLetter,
+                    threshold: _threshold,
+                    onAccuracyCalculated: (accuracy) {
+                      setState(() {
+                        _strokeCount++;
+                      });
+                      print('📊 Stroke #$_strokeCount - Accuracy: ${(accuracy * 100).toStringAsFixed(1)}%');
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // 📈 Stats
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Column(
+                        children: [
+                          const Text('Huruf', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          Text(_selectedLetter, style: GoogleFonts.amiri(fontSize: 28, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          const Text('Jumlah Coretan', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          Text('$_strokeCount', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          const Text('Threshold', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          Text('${_threshold.toStringAsFixed(0)}px', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ✍️ SMART WRITING CANVAS (LEVEL 3)
+// ═══════════════════════════════════════════════════════════════
+class SmartWritingCanvas extends StatefulWidget {
+  final String arabicChar;
+  final double threshold;
+  final Function(double accuracy)? onAccuracyCalculated;
+
+  const SmartWritingCanvas({
+    super.key,
+    required this.arabicChar,
+    required this.threshold,
+    this.onAccuracyCalculated,
+  });
+
+  @override
+  State<SmartWritingCanvas> createState() => _SmartWritingCanvasState();
+}
+
+class _SmartWritingCanvasState extends State<SmartWritingCanvas> {
+  List<List<Offset>> _paths = [];
+  List<Offset> _currentPath = [];
+  List<Offset> _guidePoints = [];
+  Size? _canvasSize;
+
+  @override
+  void initState() {
+    super.initState();
+    _generateGuidePoints();
+  }
+
+  @override
+  void didUpdateWidget(SmartWritingCanvas oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.arabicChar != widget.arabicChar) {
+      _generateGuidePoints();
+      clear();
+    }
+  }
+
+  void _generateGuidePoints() {
+    // Generate titik panduan berdasarkan posisi huruf
+    // Ini adalah pendekatan sederhana menggunakan sampling dari area tengah
+    _guidePoints = [];
+    
+    // Untuk demo, kita buat titik-titik di area tengah canvas
+    // Di produksi, ini bisa diganti dengan path vektor spesifik per huruf
+    if (_canvasSize != null) {
+      final centerX = _canvasSize!.width / 2;
+      final centerY = _canvasSize!.height / 2;
+      final radius = 100.0;
+
+      // Buat lingkaran titik panduan
+      for (int i = 0; i < 360; i += 15) {
+        double rad = i * 3.14159 / 180;
+        _guidePoints.add(Offset(
+          centerX + radius * cos(rad),
+          centerY + radius * sin(rad),
+        ));
+      }
+      
+      // Tambah titik di tengah untuk huruf seperti Ba, Ta, Tsa
+      _guidePoints.add(Offset(centerX, centerY));
+    }
+  }
+
+  void clear() {
+    setState(() {
+      _paths.clear();
+      _currentPath.clear();
+    });
+  }
+
+  void updateThreshold(double newThreshold) {
+    setState(() {
+      // Trigger rebuild dengan threshold baru
+    });
+  }
+
+  double _minDistanceToGuide(Offset point) {
+    if (_guidePoints.isEmpty) return double.infinity;
+    
+    double minDist = double.infinity;
+    for (var guidePoint in _guidePoints) {
+      double dist = sqrt(
+        pow(point.dx - guidePoint.dx, 2) + 
+        pow(point.dy - guidePoint.dy, 2)
+      );
+      if (dist < minDist) minDist = dist;
+    }
+    return minDist;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.blue, width: 3),
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (_canvasSize == null || 
+              _canvasSize!.width != constraints.maxWidth || 
+              _canvasSize!.height != constraints.maxHeight) {
+            _canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
+            _generateGuidePoints();
+          }
+
+          return Stack(
+            children: [
+              // 1. Huruf Panduan (Bayangan)
+              Center(
+                child: Text(
+                  widget.arabicChar,
+                  style: GoogleFonts.amiri(
+                    fontSize: 200,
+                    color: Colors.grey.shade200,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              
+              // 2. Visual Hint (Titik Awal)
+              Center(
+                child: SizedBox(
+                  width: 200,
+                  height: 200,
+                  child: CustomPaint(
+                    painter: HintPainter(guidePoints: _guidePoints),
+                  ),
+                ),
+              ),
+
+              // 3. Area Coretan User
+              GestureDetector(
+                onPanStart: (details) {
+                  setState(() => _currentPath.add(details.localPosition));
+                },
+                onPanUpdate: (details) {
+                  setState(() => _currentPath.add(details.localPosition));
+                },
+                onPanEnd: (_) {
+                  if (_currentPath.isNotEmpty) {
+                    // Hitung akurasi sebelum simpan
+                    double accuracy = _calculatePathAccuracy(_currentPath);
+                    widget.onAccuracyCalculated?.call(accuracy);
+                    
+                    setState(() {
+                      _paths.add(_currentPath);
+                      _currentPath = [];
+                    });
+                  }
+                },
+                child: CustomPaint(
+                  painter: SmartSignaturePainter(
+                    paths: [..._paths, _currentPath],
+                    guidePoints: _guidePoints,
+                    threshold: widget.threshold,
+                    minDistanceFunc: _minDistanceToGuide,
+                  ),
+                  size: Size.infinite,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  double _calculatePathAccuracy(List<Offset> path) {
+    if (path.isEmpty || _guidePoints.isEmpty) return 0;
+    
+    int accuratePoints = 0;
+    for (var point in path) {
+      if (_minDistanceToGuide(point) < widget.threshold) {
+        accuratePoints++;
+      }
+    }
+    return accuratePoints / path.length;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎨 SMART SIGNATURE PAINTER (WITH COLOR FEEDBACK)
+// ═══════════════════════════════════════════════════════════════
+class SmartSignaturePainter extends CustomPainter {
+  final List<List<Offset>> paths;
+  final List<Offset> guidePoints;
+  final double threshold;
+  final double Function(Offset) minDistanceFunc;
+
+  SmartSignaturePainter({
+    required this.paths,
+    required this.guidePoints,
+    required this.threshold,
+    required this.minDistanceFunc,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var path in paths) {
+      if (path.isEmpty) continue;
+
+      // Hitung persentase akurasi untuk path ini
+      int accuratePoints = 0;
+      for (var point in path) {
+        if (minDistanceFunc(point) < threshold) {
+          accuratePoints++;
+        }
+      }
+
+      double accuracy = path.isNotEmpty ? accuratePoints / path.length : 0;
+
+      // Tentukan warna berdasarkan akurasi
+      Paint paint = Paint()
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 15.0;
+
+      if (accuracy > 0.7) {
+        paint.color = Colors.green; // 👍 Bagus!
+      } else if (accuracy > 0.4) {
+        paint.color = Colors.orange; // ⚠️ Cukup
+      } else {
+        paint.color = Colors.red; // ❌ Melenceng
+      }
+
+      // Gambar path
+      Path drawPath = Path();
+      drawPath.moveTo(path[0].dx, path[0].dy);
+      for (var point in path) {
+        drawPath.lineTo(point.dx, point.dy);
+      }
+      canvas.drawPath(drawPath, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 💡 HINT PAINTER (Visual Guide Dots)
+// ═══════════════════════════════════════════════════════════════
+class HintPainter extends CustomPainter {
+  final List<Offset> guidePoints;
+
+  HintPainter({required this.guidePoints});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.blue.withOpacity(0.3)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    // Gambar titik-titik panduan
+    for (var point in guidePoints) {
+      canvas.drawCircle(point, 3, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}

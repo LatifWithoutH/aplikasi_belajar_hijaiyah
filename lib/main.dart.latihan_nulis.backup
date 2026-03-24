@@ -1,0 +1,1277 @@
+// ═══════════════════════════════════════════════════════════════
+// ✍️ LATIHAN MENULIS HIJAIYAH - FONT LOKAL VERSION
+// ✅ Tanpa google_fonts, pakai font lokal
+// ═══════════════════════════════════════════════════════════════
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:math' show sqrt, pow, min, max;
+
+// ═══════════════════════════════════════════════════════════════
+// 🎨 APP CONSTANTS
+// ═══════════════════════════════════════════════════════════════
+class AppConstants {
+  static const double sidebarWidth = 280.0;
+  static const double spacingXS = 4.0;
+  static const double spacingSM = 8.0;
+  static const double spacingMD = 16.0;
+  static const double spacingLG = 24.0;
+  
+  static const double fontSizeArabicTemplate = 0.25;
+  static const double fontSizeLabel = 14.0;
+  static const double fontSizeValue = 16.0;
+  
+  static const double brushSizeDefault = 15.0;
+  static const double brushSizeMin = 5.0;
+  static const double brushSizeMax = 30.0;
+  static const double toleranceDefault = 50.0;
+  static const double toleranceMin = 30.0;
+  static const double toleranceMax = 100.0;
+  static const double targetRadiusFactor = 0.30;
+  
+  static const Duration snackBarDuration = Duration(seconds: 3);
+  static const Duration animationDuration = Duration(milliseconds: 200);
+  
+  static const List<String> defaultLetters = ['أَ', 'بَ', 'تَ', 'ثَ'];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎨 APP THEME - FONT LOKAL
+// ═══════════════════════════════════════════════════════════════
+class AppTheme {
+  static ThemeData get light {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.teal,
+        brightness: Brightness.light,
+        secondary: Colors.green,
+      ),
+      scaffoldBackgroundColor: Colors.grey[50],
+      
+      // ✅ SET FONT DEFAULT untuk seluruh app
+      fontFamily: 'Poppins',
+      
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.teal[100],
+        foregroundColor: Colors.teal[900],
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: Colors.teal[900],
+          fontFamily: 'Poppins',
+        ),
+      ),
+      
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+          fontSize: 48,
+          fontWeight: FontWeight.w900,
+          fontFamily: 'NotoNaskhArabic',
+          color: Colors.grey,
+        ),
+        titleMedium: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.black[87],
+          fontFamily: 'Poppins',
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          color: Colors.black[54],
+          fontFamily: 'Poppins',
+        ),
+        labelSmall: TextStyle(
+          fontSize: 12,
+          color: Colors.grey,
+          fontFamily: 'Poppins',
+        ),
+      ),
+      
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.teal,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            fontFamily: 'Poppins',
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
+        ),
+      ),
+      
+      sliderTheme: SliderThemeData(
+        activeTrackColor: Colors.teal,
+        inactiveTrackColor: Colors.teal[100],
+        thumbColor: Colors.teal,
+        overlayColor: Colors.teal.withOpacity(0.2),
+        valueIndicatorColor: Colors.teal[800],
+        valueIndicatorTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+        ),
+      ),
+      
+      chipTheme: ChipThemeData(
+        backgroundColor: Colors.grey[100],
+        selectedColor: Colors.teal[100],
+        labelStyle: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w500,
+          fontFamily: 'NotoNaskhArabic',
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🚀 MAIN ENTRY POINT
+// ═══════════════════════════════════════════════════════════════
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]).then((_) {
+    runApp(const WritingTestApp());
+  });
+}
+
+class WritingTestApp extends StatelessWidget {
+  const WritingTestApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: '✍️ Latihan Menulis Hijaiyah',
+      theme: AppTheme.light,
+      home: const WritingPracticePage(),
+      debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return Directionality(
+          textDirection: TextDirection.ltr,
+          child: child!,
+        );
+      },
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 📱 MAIN PAGE
+// ═══════════════════════════════════════════════════════════════
+class WritingPracticePage extends StatefulWidget {
+  const WritingPracticePage({super.key});
+
+  @override
+  State<WritingPracticePage> createState() => _WritingPracticePageState();
+}
+
+class _WritingPracticePageState extends State<WritingPracticePage> {
+  String _selectedLetter = AppConstants.defaultLetters.first;
+  double _brushSize = AppConstants.brushSizeDefault;
+  double _tolerance = AppConstants.toleranceDefault;
+  int _totalAttempts = 0;
+  int _correctAttempts = 0;
+  bool _isChecked = false;
+  bool _showOnboarding = true;
+  
+  final GlobalKey<_WritingCanvasState> _canvasKey = GlobalKey();
+  final List<String> _testLetters = AppConstants.defaultLetters;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_showOnboarding) {
+        _showOnboardingDialog();
+      }
+    });
+  }
+
+  void _showOnboardingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(AppConstants.spacingLG),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.teal[200]!, width: 2),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.edit, size: 56, color: Colors.teal[700]),
+              const SizedBox(height: AppConstants.spacingMD),
+              Text(
+                'Selamat Datang! ✍️',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.teal[900],
+                ),
+              ),
+              const SizedBox(height: AppConstants.spacingSM),
+              Text(
+                'Belajar menulis huruf Hijaiyah dengan menyenangkan!\n\n'
+                '1️⃣ Pilih huruf di panel kiri\n'
+                '2️⃣ Ikuti pola abu-abu di tengah kanvas\n'
+                '3️⃣ Klik "Periksa" untuk melihat hasil\n\n'
+                '💡 Tips: Gunakan kuas yang sesuai dan atur ketelitian!',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: AppConstants.spacingLG),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() => _showOnboarding = false);
+                  Navigator.pop(ctx);
+                },
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Mulai Latihan'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _clearCanvas() {
+    setState(() {
+      _totalAttempts = 0;
+      _correctAttempts = 0;
+      _isChecked = false;
+    });
+    _canvasKey.currentState?.clear();
+  }
+
+  void _checkAccuracy() {
+    if (_canvasKey.currentState == null) return;
+    
+    final result = _canvasKey.currentState?.checkAllStrokes(_tolerance);
+    if (result != null) {
+      setState(() {
+        _totalAttempts++;
+        if (result) _correctAttempts++;
+        _isChecked = true;
+      });
+      
+      _showResultFeedback(result);
+    }
+  }
+
+  void _showResultFeedback(bool isCorrect) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isCorrect ? Icons.emoji_events : Icons.edit,
+              color: Colors.white,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isCorrect ? '🎉 Masya Allah! Tulisanmu benar!' : '💪 Hampir benar, coba lagi!',
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isCorrect ? Colors.green[700] : Colors.orange[700],
+        duration: AppConstants.snackBarDuration,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+    
+    HapticFeedback.lightImpact();
+  }
+
+  void _onLetterChanged(String letter) {
+    setState(() {
+      _selectedLetter = letter;
+      _isChecked = false;
+    });
+    _canvasKey.currentState?.clear();
+  }
+
+  double get _accuracy => _totalAttempts == 0 
+    ? 0 
+    : (_correctAttempts / _totalAttempts) * 100;
+
+  @override
+  Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final shortestSide = MediaQuery.sizeOf(context).shortestSide;
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          isLandscape 
+            ? '✍️ Latihan Menulis Hijaiyah' 
+            : 'Menulis Hijaiyah',
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: _showOnboardingDialog,
+            tooltip: 'Panduan',
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: _clearCanvas,
+            tooltip: 'Reset Semua',
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.teal[50]!, Colors.green[50]!],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: isLandscape 
+            ? _buildLandscapeLayout(shortestSide)
+            : _buildPortraitLayout(shortestSide),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLandscapeLayout(double shortestSide) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.spacingLG, 
+        vertical: AppConstants.spacingMD,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: AppConstants.sidebarWidth,
+            child: _buildSidebar(shortestSide),
+          ),
+          const SizedBox(width: AppConstants.spacingLG),
+          Expanded(
+            child: _buildCanvasArea(shortestSide),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPortraitLayout(double shortestSide) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppConstants.spacingMD),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildLetterSelector(),
+          const SizedBox(height: AppConstants.spacingSM),
+          _buildControlPanel(),
+          const SizedBox(height: AppConstants.spacingSM),
+          _buildStatsCard(),
+          const SizedBox(height: AppConstants.spacingSM),
+          _buildAccuracyCard(),
+          const SizedBox(height: AppConstants.spacingMD),
+          _buildCanvasArea(shortestSide),
+          const SizedBox(height: AppConstants.spacingMD),
+          _buildActionButtons(),
+          const SizedBox(height: AppConstants.spacingSM),
+          _buildLegend(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebar(double shortestSide) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildLetterSelector(),
+          const SizedBox(height: AppConstants.spacingMD),
+          _buildControlPanel(),
+          const SizedBox(height: AppConstants.spacingMD),
+          _buildStatsCard(),
+          const SizedBox(height: AppConstants.spacingMD),
+          _buildAccuracyCard(),
+          const SizedBox(height: AppConstants.spacingMD),
+          _buildActionButtons(),
+          const SizedBox(height: AppConstants.spacingMD),
+          _buildLegend(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLetterSelector() {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.alternate_email, size: 18, color: Colors.teal[700]),
+              const SizedBox(width: 6),
+              Text('Pilih Huruf', style: Theme.of(context).textTheme.titleMedium),
+            ],
+          ),
+          const SizedBox(height: AppConstants.spacingSM),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _testLetters.map((letter) {
+                final isSelected = _selectedLetter == letter;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: AnimatedScale(
+                    scale: isSelected ? 1.1 : 1.0,
+                    duration: AppConstants.animationDuration,
+                    child: ChoiceChip(
+                      label: Text(
+                        letter,
+                        textDirection: TextDirection.rtl,
+                        locale: const Locale('ar', 'SA'),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontFamily: 'NotoNaskhArabic',
+                        ),
+                      ),
+                      selected: isSelected,
+                      onSelected: (s) {
+                        if (s) _onLetterChanged(letter);
+                      },
+                      avatar: isSelected 
+                        ? const Icon(Icons.check_circle, size: 16, color: Colors.white)
+                        : null,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControlPanel() {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.tune, size: 18, color: Colors.teal[700]),
+              const SizedBox(width: 6),
+              Text('Pengaturan', style: Theme.of(context).textTheme.titleMedium),
+            ],
+          ),
+          const SizedBox(height: AppConstants.spacingSM),
+          
+          _buildLabeledSlider(
+            icon: Icons.brush,
+            label: 'Ukuran Kuas',
+            value: _brushSize,
+            min: AppConstants.brushSizeMin,
+            max: AppConstants.brushSizeMax,
+            suffix: 'px',
+            onChanged: _isChecked ? null : (v) {
+              setState(() => _brushSize = v);
+              _canvasKey.currentState?.updateBrushSize(v);
+            },
+            previewBuilder: (size) => Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey[400]!),
+              ),
+              child: Center(
+                child: Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.7),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: AppConstants.spacingSM),
+          
+          _buildLabeledSlider(
+            icon: Icons.adjust,
+            label: 'Ketelitian',
+            value: _tolerance,
+            min: AppConstants.toleranceMin,
+            max: AppConstants.toleranceMax,
+            suffix: '',
+            labelBuilder: (v) {
+              if (v < 40) return 'Longgar 😊';
+              if (v < 70) return 'Normal 👍';
+              return 'Ketatl ✨';
+            },
+            onChanged: _isChecked ? null : (v) {
+              setState(() => _tolerance = v);
+              _canvasKey.currentState?.updateTolerance(v);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLabeledSlider({
+    required IconData icon,
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required String suffix,
+    String Function(double)? labelBuilder,
+    required ValueChanged<double>? onChanged,
+    Widget Function(double)? previewBuilder,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: Colors.teal[600]),
+            const SizedBox(width: 6),
+            Text(label, style: Theme.of(context).textTheme.labelSmall),
+            const Spacer(),
+            Text(
+              labelBuilder?.call(value) ?? '${value.toStringAsFixed(0)}$suffix',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.teal[700],
+              ),
+            ),
+            if (onChanged != null) ...[
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.refresh, size: 14),
+                onPressed: () {
+                  if (label == 'Ukuran Kuas') {
+                    setState(() => _brushSize = AppConstants.brushSizeDefault);
+                    _canvasKey.currentState?.updateBrushSize(AppConstants.brushSizeDefault);
+                  } else {
+                    setState(() => _tolerance = AppConstants.toleranceDefault);
+                    _canvasKey.currentState?.updateTolerance(AppConstants.toleranceDefault);
+                  }
+                },
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Reset',
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              child: Slider(
+                value: value,
+                min: min,
+                max: max,
+                divisions: ((max - min) / 5).round(),
+                label: '${value.toStringAsFixed(0)}$suffix',
+                onChanged: onChanged,
+              ),
+            ),
+            if (previewBuilder != null) ...[
+              const SizedBox(width: 8),
+              previewBuilder(value),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsCard() {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.bar_chart, size: 18, color: Colors.teal[700]),
+              const SizedBox(width: 6),
+              Text('Statistik', style: Theme.of(context).textTheme.titleMedium),
+            ],
+          ),
+          const SizedBox(height: AppConstants.spacingSM),
+          _buildStatRow('Huruf', _selectedLetter, Colors.blue, isArabic: true),
+          const SizedBox(height: 4),
+          _buildStatRow('Percobaan', '$_totalAttempts', Colors.orange),
+          const SizedBox(height: 4),
+          _buildStatRow('Benar', '$_correctAttempts', Colors.green),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatRow(String label, String value, Color color, {bool isArabic = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.labelSmall),
+        Text(
+          value,
+          textDirection: isArabic ? TextDirection.rtl : null,
+          locale: isArabic ? const Locale('ar', 'SA') : null,
+          style: TextStyle(
+            fontSize: AppConstants.fontSizeValue,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAccuracyCard() {
+    final accuracyColor = _accuracy >= 70 
+      ? Colors.green 
+      : _accuracy >= 40 
+        ? Colors.orange 
+        : Colors.red;
+    
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.analytics, size: 18, color: Colors.teal[700]),
+                  const SizedBox(width: 6),
+                  Text('Akurasi', style: Theme.of(context).textTheme.titleMedium),
+                ],
+              ),
+              Text(
+                '${_accuracy.toStringAsFixed(0)}%',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: accuracyColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Stack(
+              children: [
+                LinearProgressIndicator(
+                  value: _accuracy / 100,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(accuracyColor),
+                  minHeight: 10,
+                ),
+                Center(
+                  child: Text(
+                    '${_accuracy.toStringAsFixed(0)}%',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      shadows: [Shadow(color: Colors.black[54], blurRadius: 2)],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCanvasArea(double shortestSide) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: RepaintBoundary(
+          child: WritingCanvas(
+            key: _canvasKey,
+            arabicChar: _selectedLetter,
+            brushSize: _brushSize,
+            tolerance: _tolerance,
+            isChecked: _isChecked,
+            templateFontSize: shortestSide * AppConstants.fontSizeArabicTemplate,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Column(
+      children: [
+        AnimatedContainer(
+          duration: AppConstants.animationDuration,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: _isChecked 
+              ? null 
+              : const LinearGradient(colors: [Colors.teal, Colors.green]),
+            color: _isChecked ? Colors.grey[200] : null,
+          ),
+          child: ElevatedButton.icon(
+            onPressed: _isChecked ? null : _checkAccuracy,
+            icon: Icon(_isChecked ? Icons.check_circle : Icons.check_circle_outline),
+            label: Text(
+              _isChecked ? '✓ Sudah Diperiksa' : 'Periksa Jawaban',
+              style: TextStyle(
+                color: _isChecked ? Colors.grey[600] : Colors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _isChecked ? null : Colors.transparent,
+              foregroundColor: _isChecked ? Colors.grey[600] : Colors.white,
+              elevation: _isChecked ? 0 : 2,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+        if (_isChecked) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _clearCanvas,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Coba Lagi'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.orange[700],
+              side: BorderSide(color: Colors.orange[300]!),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildLegend() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _legendItem(Colors.blue, 'Menggambar'),
+          const SizedBox(width: 20),
+          _legendItem(Colors.green, 'Benar ✓'),
+          const SizedBox(width: 20),
+          _legendItem(Colors.red, 'Perlu Latihan ✗'),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendItem(Color color, String label) {
+    return Row(
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+            boxShadow: [
+              BoxShadow(color: color.withOpacity(0.4), blurRadius: 4),
+            ],
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(label, style: Theme.of(context).textTheme.labelSmall),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎨 REUSABLE CARD WIDGET
+// ═══════════════════════════════════════════════════════════════
+class _Card extends StatelessWidget {
+  final Widget child;
+  final double padding;
+  final double radius;
+
+  const _Card({
+    required this.child,
+    this.padding = AppConstants.spacingMD,
+    this.radius = 16,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(padding),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎨 WRITING CANVAS WIDGET
+// ═══════════════════════════════════════════════════════════════
+class WritingCanvas extends StatefulWidget {
+  final String arabicChar;
+  final double brushSize;
+  final double tolerance;
+  final bool isChecked;
+  final double templateFontSize;
+
+  const WritingCanvas({
+    super.key,
+    required this.arabicChar,
+    required this.brushSize,
+    required this.tolerance,
+    required this.isChecked,
+    required this.templateFontSize,
+  });
+
+  @override
+  State<WritingCanvas> createState() => _WritingCanvasState();
+}
+
+class _WritingCanvasState extends State<WritingCanvas> {
+  List<StrokeData> _strokes = [];
+  List<Offset> _currentPoints = [];
+  List<double> _currentPressures = [];
+  List<bool?> _strokeAccuracy = [];
+  bool _isDrawing = false;
+  
+  late double _currentBrushSize;
+  late double _currentTolerance;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentBrushSize = widget.brushSize;
+    _currentTolerance = widget.tolerance;
+  }
+
+  @override
+  void didUpdateWidget(WritingCanvas oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.brushSize != widget.brushSize) {
+      _currentBrushSize = widget.brushSize;
+    }
+    if (oldWidget.tolerance != widget.tolerance) {
+      _currentTolerance = widget.tolerance;
+    }
+  }
+
+  @override
+  void dispose() {
+    _strokes.clear();
+    _currentPoints.clear();
+    _currentPressures.clear();
+    _strokeAccuracy.clear();
+    super.dispose();
+  }
+
+  void clear() {
+    if (mounted) {
+      setState(() {
+        _strokes.clear();
+        _currentPoints.clear();
+        _currentPressures.clear();
+        _strokeAccuracy.clear();
+        _isDrawing = false;
+      });
+    }
+  }
+
+  void updateBrushSize(double size) {
+    if (mounted && _currentBrushSize != size) {
+      setState(() => _currentBrushSize = size);
+    }
+  }
+
+  void updateTolerance(double tolerance) {
+    if (mounted && _currentTolerance != tolerance) {
+      setState(() => _currentTolerance = tolerance);
+    }
+  }
+
+  void _onPanStart(DragStartDetails details) {
+    if (widget.isChecked || _isDrawing) return;
+    setState(() {
+      _isDrawing = true;
+      _currentPoints = [details.localPosition];
+      _currentPressures = [1.0];
+    });
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    if (widget.isChecked || !_isDrawing) return;
+    setState(() {
+      _currentPoints.add(details.localPosition);
+      
+      if (_currentPoints.length > 2) {
+        final p1 = _currentPoints[_currentPoints.length - 2];
+        final p2 = _currentPoints[_currentPoints.length - 1];
+        final distance = sqrt(pow(p2.dx - p1.dx, 2) + pow(p2.dy - p1.dy, 2));
+        _currentPressures.add(
+          max(0.3, min(1.0, 1.0 - (distance / 100))),
+        );
+      } else {
+        _currentPressures.add(1.0);
+      }
+    });
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    if (!_isDrawing) return;
+    
+    if (_currentPoints.length > 1) {
+      setState(() {
+        _strokes.add(StrokeData(
+          points: _smooth(_currentPoints, 0.5),
+          pressures: List.from(_currentPressures),
+          baseBrushSize: _currentBrushSize,
+        ));
+        _strokeAccuracy.add(null);
+        _currentPoints.clear();
+        _currentPressures.clear();
+        _isDrawing = false;
+      });
+    } else {
+      setState(() {
+        _isDrawing = false;
+        _currentPoints.clear();
+        _currentPressures.clear();
+      });
+    }
+  }
+
+  bool? checkAllStrokes(double tolerance) {
+    if (_strokes.isEmpty) return null;
+
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return null;
+    final size = box.size;
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final targetRadius = (size.width * AppConstants.targetRadiusFactor) + tolerance;
+
+    int correctStrokes = 0;
+    List<bool?> newAccuracy = [];
+
+    for (var stroke in _strokes) {
+      if (stroke.points.isEmpty) {
+        newAccuracy.add(false);
+        continue;
+      }
+
+      int goodPoints = 0;
+      for (var p in stroke.points) {
+        final dist = sqrt(pow(p.dx - centerX, 2) + pow(p.dy - centerY, 2));
+        if (dist < targetRadius) goodPoints++;
+      }
+
+      bool isCorrect = (goodPoints / stroke.points.length) > 0.5;
+      if (isCorrect) correctStrokes++;
+      newAccuracy.add(isCorrect);
+    }
+
+    if (mounted) {
+      setState(() => _strokeAccuracy = newAccuracy);
+    }
+
+    return correctStrokes == _strokes.length;
+  }
+
+  List<Offset> _smooth(List<Offset> pts, double factor) {
+    if (pts.length < 3) return List.from(pts);
+    List<Offset> result = [];
+    int range = ((1.0 - factor) * 10).toInt();
+
+    for (int i = 0; i < pts.length; i++) {
+      if (i == 0 || i == pts.length - 1) {
+        result.add(pts[i]);
+      } else {
+        double x = 0, y = 0, w = 0;
+        for (int j = max(0, i - range); j <= min(pts.length - 1, i + range); j++) {
+          double weight = 1.0 / (pow((i - j).abs() + 1, 2));
+          x += pts[j].dx * weight;
+          y += pts[j].dy * weight;
+          w += weight;
+        }
+        result.add(Offset(x / w, y / w));
+      }
+    }
+    return result;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onPanStart: _onPanStart,
+      onPanUpdate: _onPanUpdate,
+      onPanEnd: _onPanEnd,
+      child: Stack(
+        children: [
+          Center(
+            child: Text(
+              widget.arabicChar,
+              textDirection: TextDirection.rtl,
+              locale: const Locale('ar', 'SA'),
+              style: TextStyle(
+                fontSize: widget.templateFontSize,
+                color: Colors.grey[300],
+                fontWeight: FontWeight.w900,
+                height: 1.0,
+                fontFamily: 'NotoNaskhArabic',
+              ),
+            ),
+          ),
+          
+          CustomPaint(
+            painter: WritingPainter(
+              strokes: _strokes,
+              current: _currentPoints,
+              pressures: _currentPressures,
+              size: _currentBrushSize,
+              accuracy: _strokeAccuracy,
+              isChecked: widget.isChecked,
+            ),
+            size: Size.infinite,
+          ),
+          
+          if (_strokes.isEmpty && _currentPoints.isEmpty && !widget.isChecked)
+            Positioned.fill(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.touch_app,
+                      size: 40,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Sentuh & geser untuk mulai menulis',
+                      style: TextStyle(
+                        color: Colors.grey[500],
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          
+          if (widget.isChecked)
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.check_circle,
+                  size: 60,
+                  color: Colors.green[400],
+                  shadows: const [
+                    Shadow(color: Colors.white, blurRadius: 8),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 📝 STROKE DATA MODEL
+// ═══════════════════════════════════════════════════════════════
+class StrokeData {
+  final List<Offset> points;
+  final List<double> pressures;
+  final double baseBrushSize;
+
+  StrokeData({
+    required this.points,
+    required this.pressures,
+    required this.baseBrushSize,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StrokeData &&
+          runtimeType == other.runtimeType &&
+          points == other.points &&
+          pressures == other.pressures &&
+          baseBrushSize == other.baseBrushSize;
+
+  @override
+  int get hashCode =>
+      points.hashCode ^ pressures.hashCode ^ baseBrushSize.hashCode;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🎨 CUSTOM PAINTER
+// ═══════════════════════════════════════════════════════════════
+class WritingPainter extends CustomPainter {
+  final List<StrokeData> strokes;
+  final List<Offset> current;
+  final List<double> pressures;
+  final double size;
+  final List<bool?> accuracy;
+  final bool isChecked;
+
+  WritingPainter({
+    required this.strokes,
+    required this.current,
+    required this.pressures,
+    required this.size,
+    required this.accuracy,
+    required this.isChecked,
+  });
+
+  @override
+  void paint(Canvas canvas, Size canvasSize) {
+    for (int i = 0; i < strokes.length; i++) {
+      var stroke = strokes[i];
+      bool? isCorrect = i < accuracy.length ? accuracy[i] : null;
+      _drawStroke(canvas, stroke.points, stroke.pressures, stroke.baseBrushSize, isCorrect);
+    }
+
+    if (current.length > 1 && !isChecked) {
+      _drawStroke(canvas, current, pressures, size, null);
+    }
+  }
+
+  void _drawStroke(
+    Canvas c, 
+    List<Offset> pts, 
+    List<double> prs, 
+    double bs, 
+    bool? correct,
+  ) {
+    if (pts.length < 2) return;
+
+    final color = correct == null 
+      ? Colors.blue.withOpacity(0.85)
+      : correct 
+        ? Colors.green.withOpacity(0.9) 
+        : Colors.red.withOpacity(0.9);
+
+    final paint = Paint()
+      ..color = color
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = bs
+      ..style = PaintingStyle.stroke
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 0.5);
+
+    for (int i = 1; i < pts.length; i++) {
+      final p1 = pts[i - 1];
+      final p2 = pts[i];
+      final pressure = i < prs.length ? prs[i] : 1.0;
+      
+      paint.strokeWidth = bs * pressure;
+      c.drawLine(p1, p2, paint);
+    }
+
+    final highlightPaint = Paint()
+      ..color = Colors.white.withOpacity(0.2)
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = bs * 0.3
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 1; i < pts.length; i++) {
+      c.drawLine(pts[i - 1], pts[i], highlightPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(WritingPainter old) {
+    return !listEquals(old.strokes, strokes) ||
+           !listEquals(old.current, current) ||
+           !listEquals(old.accuracy, accuracy) ||
+           old.size != size ||
+           old.isChecked != isChecked;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 🔧 HELPER: List equality
+// ═══════════════════════════════════════════════════════════════
+bool listEquals<T>(List<T>? a, List<T>? b) {
+  if (a == null) return b == null;
+  if (b == null || a.length != b.length) return false;
+  for (int i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}

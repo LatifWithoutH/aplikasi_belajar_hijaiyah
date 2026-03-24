@@ -1,6 +1,5 @@
-name: hijaiyah_web
-description: A Flutter Web App for Learning Hijaiyah.
-publish_to: 'none'
+name: writing_test
+description: Writing Level 3 Test for Android - No STT
 version: 1.0.0+1
 
 environment:
@@ -9,17 +8,35 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  audioplayers: ^5.2.0
-  google_fonts: ^5.1.0
-  speech_to_text: ^6.3.0
+  
+  # ✅ Dependencies Utama
+  audioplayers: ^6.0.0      # Untuk audio (Android & Web*)
+  google_fonts: ^6.1.0      # Untuk font Latin (Poppins)
+  speech_to_text: ^6.6.0    # Untuk STT (Android & Web*)
+  web: ^0.5.1               # ✅ PENTING: Dependency tambahan untuk web support
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
 
 flutter:
   uses-material-design: true
-
+  
+  # ✅ Assets Audio
   assets:
     - assets/audio/
+  
+  # ✅ Font Lokal
+  fonts:
+    # ✅ Font Display - TintaArabic (untuk tampilan utama)
+    - family: TintaArabic
+      fonts:
+        - asset: assets/fonts/TintaArabic-Bold.otf
+          weight: 700
+    
+    # ✅ Font Writing - NotoNaskhArabic (khusus tracing/menulis)
+    - family: NotoNaskhArabic
+      fonts:
+        - asset: assets/fonts/NotoNaskhArabic-Regular.ttf
+        - asset: assets/fonts/NotoNaskhArabic-Bold.ttf
+          weight: 700
