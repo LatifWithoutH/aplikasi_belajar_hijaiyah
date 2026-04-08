@@ -1,0 +1,273 @@
+import 'package:flutter/material.dart';
+import 'dart:math' as math;
+
+void main() => runApp(const HijaiyahHomeApp());
+
+class HijaiyahHomeApp extends StatelessWidget {
+  const HijaiyahHomeApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: const HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  late final AnimationController _floatController;
+  final List<_CardData> _cards = [];
+
+  // 📐 UKURAN REFERENSI (Design Mockup)
+  static const double refWidth = 375.0;
+  static const double refHeight = 812.0;
+  
+  double scaleX = 1.0;
+  double scaleY = 1.0;
+
+  static const List<List<String>> letterGroups = [
+    ['ا', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر'],
+    ['ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف'],
+    ['ق', 'ك', 'ل', 'م', 'ن', 'ه', 'و', 'ي', 'ة', 'ء']
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _cards.add(_CardData(group: 0, color: const Color(0xFFA6C26E), relX: 0.72, relY: 0.28, rotation: -15));
+    _cards.add(_CardData(group: 1, color: const Color(0xFFF39C63), relX: 0.78, relY: 0.58, rotation: 8));
+    _cards.add(_CardData(group: 2, color: const Color(0xFF6BC5D1), relX: 0.18, relY: 0.42, rotation: 12));
+
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _floatController.dispose();
+    super.dispose();
+  }
+
+  void _onCardTap(int cardIndex) {
+    setState(() {
+      _cards[cardIndex].currentIndex = (_cards[cardIndex].currentIndex + 1) % 10;
+    });
+  }
+
+  double sw(double value) => value * scaleX;
+  double sh(double value) => value * scaleY;
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    scaleX = screenWidth / refWidth;
+    scaleY = screenHeight / refHeight;
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          // 🖼️ 1. ILUSTRASI FULL SCREEN (Background Utama)
+          Positioned.fill(
+            child: Image.asset(
+              './illust_guru_anak.png',
+              fit: BoxFit.cover,        // 🔑 Mengisi layar penuh, rasio terjaga
+              alignment: Alignment.center,
+              errorBuilder: (_, __, ___) => _buildSkyBackground(), // Fallback ke gradient jika gambar tidak ada
+            ),
+          ),
+
+          // ☁️ 2. Awan Dekoratif (Overlay di atas ilustrasi)
+          _buildClouds(),
+          
+          // 🎲 3. Kartu Huruf Melayang
+          ..._buildFloatingCards(screenWidth, screenHeight),
+
+          // 🟣 4. Tombol PLAY
+          _buildPlayButton(),
+        ],
+      ),
+    );
+  }
+
+  // 🌤️ Fallback Background (jika ilustrasi belum ada)
+  Widget _buildSkyBackground() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF87CEEB), Color(0xFFB0E0E6)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildFloatingCards(double screenWidth, double screenHeight) {
+    return List.generate(_cards.length, (i) {
+      final card = _cards[i];
+      
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return AnimatedBuilder(
+            animation: _floatController,
+            builder: (context, _) {
+              final t = _floatController.value;
+              final floatY = math.sin(card.group * 2.0 + t * math.pi * 2) * sh(15.0);
+              final floatX = math.cos(card.group * 2.0 + t * math.pi * 2) * sw(8.0);
+
+              final left = (card.relX * refWidth * scaleX) + floatX;
+              final top = (card.relY * refHeight * scaleY) + floatY;
+
+              return Positioned(
+                left: left,
+                top: top,
+                child: _buildInteractiveCard(i, card),
+              );
+            },
+          );
+        },
+      );
+    });
+  }
+
+  Widget _buildInteractiveCard(int index, _CardData card) {
+    final currentLetter = letterGroups[card.group][card.currentIndex];
+    
+    return GestureDetector(
+      onTap: () => _onCardTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: Transform.rotate(
+        angle: card.rotation * math.pi / 180,
+        child: Container(
+          width: sw(100),
+          height: sh(100),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(sw(25)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: sw(10),
+                offset: Offset(0, sh(5)),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(sw(6)),
+            child: Container(
+              decoration: BoxDecoration(
+                color: card.color,
+                borderRadius: BorderRadius.circular(sw(18)),
+              ),
+              child: Center(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return ScaleTransition(scale: animation, child: child);
+                  },
+                  child: Text(
+                    currentLetter,
+                    key: ValueKey('${card.group}_${card.currentIndex}'),
+                    textDirection: TextDirection.rtl,
+                    style: TextStyle(
+                      fontSize: sw(38),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClouds() {
+    return Stack(
+      children: [
+        Positioned(top: sh(180), left: -sw(20), child: _cloud(sw(100), sh(50))),
+        Positioned(top: sh(300), right: -sw(50), child: _cloud(sw(120), sh(60))),
+        Positioned(top: sh(450), left: sw(100), child: _cloud(sw(80), sh(40))),
+      ],
+    );
+  }
+
+  Widget _cloud(double w, double h) {
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(h),
+      ),
+    );
+  }
+
+  Widget _buildPlayButton() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.only(bottom: sh(150)),
+        child: GestureDetector(
+          onTap: () => debugPrint("🚀 PLAY ditekan!"),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: sw(40), vertical: sh(15)),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(sw(30)),
+              border: Border.all(color: Colors.white, width: sw(4)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: sw(10),
+                  offset: Offset(0, sh(5)),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.play_arrow, color: Colors.white, size: sw(32)),
+                SizedBox(width: sw(8)),
+                Text("PLAY", style: TextStyle(color: Colors.white, fontSize: sw(28), fontWeight: FontWeight.bold, letterSpacing: 1)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CardData {
+  final int group;
+  final Color color;
+  final double relX, relY, rotation;
+  int currentIndex;
+
+  _CardData({
+    required this.group,
+    required this.color,
+    required this.relX,
+    required this.relY,
+    required this.rotation,
+    this.currentIndex = 0,
+  });
+}
